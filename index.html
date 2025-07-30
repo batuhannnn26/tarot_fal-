@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tarot Falı</title>
+<style>
+    body {
+        background: #4a2f48;
+        font-family: Arial, sans-serif;
+        color: #f3e9f7;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+    }
+    h1 {
+        margin-bottom: 20px;
+        font-weight: 700;
+        text-shadow: 1px 1px 3px #2f1e35;
+    }
+    button {
+        background-color: #754C78;
+        border: none;
+        padding: 12px 25px;
+        color: white;
+        font-size: 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 10px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #8b5ea5;
+    }
+    #resultSingle, #resultThree {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+    .card-container {
+        width: 180px;
+        background: #8c68a0;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+        color: #f3e9f7;
+        animation: fadeInUp 0.7s ease forwards;
+        opacity: 0;
+        transform: translateY(20px);
+        text-align: left;
+    }
+    .card-container.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .card-container img {
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 5px 12px rgba(0,0,0,0.5);
+        display: block;
+        margin-bottom: 12px;
+    }
+    .card-title {
+        font-weight: 700;
+        font-size: 20px;
+        text-shadow: 1px 1px 3px #4b355c;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    .card-position {
+        font-style: italic;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-align: center;
+        text-shadow: 1px 1px 2px #3e2f4d;
+    }
+    .card-meaning, .card-comment {
+        margin-bottom: 10px;
+        font-size: 14px;
+        line-height: 1.3;
+    }
+    .card-meaning strong, .card-comment strong {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 700;
+    }
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+</head>
+<body>
+<h1>Tarot Falı</h1>
+<button id="drawSingleCardBtn">Tek Kart Çek</button>
+<button id="drawThreeCardsBtn">3 Kart (Geçmiş-Şimdi-Gelecek) Çek</button>
+
+<div id="resultSingle"></div>
+<div id="resultThree"></div>
+
+<script>
+const cards = [
+    {
+        name: "The Fool",
+        image: "images/the_fool.png",
+        meaning: "Yeni başlangıçlar, macera, özgürlük ve saf potansiyel.",
+        past: "Geçmişte, cesur bir adım attınız ve yeni fırsatlara kapı açtınız.",
+        present: "Şu anda hayatınızda yeni bir başlangıç enerjisi hakim.",
+        future: "Gelecekte sizi heyecan verici maceralar bekliyor."
+    },
+    {
+        name: "The Magician",
+        image: "images/the_magician.png",
+        meaning: "Yaratıcılık, beceri, güç ve manifestasyon.",
+        past: "Geçmişte yeteneklerinizi ortaya koydunuz.",
+        present: "Şu anda potansiyelinizi kullanmanın tam zamanı.",
+        future: "Gelecekte isteklerinizi gerçekleştireceksiniz."
+    },
+    {
+        name: "The High Priestess",
+        image: "images/the_high_priestess.png",
+        meaning: "Sezgi, bilinçaltı, gizem ve içsel bilgelik.",
+        past: "Geçmişte iç sesinize kulak verdiniz.",
+        present: "Şu anda sezgileriniz sizi doğru yöne yönlendiriyor.",
+        future: "Gelecekte sırlar ve içsel bilgiler açığa çıkacak."
+    },
+    {
+        name: "The Empress",
+        image: "images/the_empress.png",
+        meaning: "Bereket, doğurganlık, doğa ve bolluk.",
+        past: "Geçmişte yaratıcı ve verimli dönemler yaşadınız.",
+        present: "Şu anda hayatınızda bolluk ve güzellik hakim.",
+        future: "Gelecekte yeni fırsatlar ve büyüme olacak."
+    },
+    {
+        name: "The Emperor",
+        image: "images/the_emperor.png",
+        meaning: "Otorite, yapı, liderlik ve güç.",
+        past: "Geçmişte disiplinli ve güçlü oldunuz.",
+        present: "Şu anda kontrolü elinizde tutuyorsunuz.",
+        future: "Gelecekte sağlam temeller üzerine inşa edeceksiniz."
+    },
+    {
+        name: "The Hierophant",
+        image: "images/the_hierophant.png",
+        meaning: "Gelenek, öğreti, ruhani rehberlik.",
+        past: "Geçmişte geleneklere bağlı kaldınız.",
+        present: "Şu anda öğrenmeye ve rehberliğe açıksınız.",
+        future: "Gelecekte yeni bilgelikler kazanacaksınız."
+    },
+    {
+        name: "The Lovers",
+        image: "images/the_lovers.png",
+        meaning: "Aşk, birliktelik, seçimler ve uyum.",
+        past: "Geçmişte önemli ilişkileriniz oldu.",
+        present: "Şu anda sevgi ve uyum içinde olabilirsiniz.",
+        future: "Gelecekte kalbinizin sesini dinleyeceksiniz."
+    },
+    {
+        name: "The Chariot",
+        image: "images/the_chariot.png",
+        meaning: "Zafer, irade gücü, kontrol ve kararlılık.",
+        past: "Geçmişte zorlukları aştınız.",
+        present: "Şu anda hedeflerinize odaklanmalısınız.",
+        future: "Gelecekte başarı sizi bekliyor."
+    },
+    {
+        name: "Strength",
+        image: "images/strength.png",
+        meaning: "Cesaret, sabır, güç ve şefkat.",
+        past: "Geçmişte zorluklar karşısında dayanıklı oldunuz.",
+        present: "Şu anda iç gücünüzü kullanıyorsunuz.",
+        future: "Gelecekte güç ve kararlılık sizi yönlendirecek."
+    },
+    {
+        name: "The Hermit",
+        image: "images/the_hermit.png",
+        meaning: "İçe dönüş, bilgelik, yalnızlık ve rehberlik.",
+        past: "Geçmişte yalnız kalıp düşündünüz.",
+        present: "Şu anda kendinizi sorguluyorsunuz.",
+        future: "Gelecekte önemli bir içsel aydınlanma yaşayacaksınız."
+    },
+    {
+        name: "Wheel of Fortune",
+        image: "images/wheel_of_fortune.png",
+        meaning: "Kader, değişim, döngüler ve şans.",
+        past: "Geçmişte beklenmedik değişiklikler yaşadınız.",
+        present: "Şu anda hayatınızda bir dönüm noktası var.",
+        future: "Gelecekte şans ve fırsatlar kapınızı çalacak."
+    },
+    {
+        name: "Justice",
+        image: "images/justice.png",
+        meaning: "Adalet, denge, karar verme ve sorumluluk.",
+        past: "Geçmişte adil ve doğru kararlar aldınız.",
+        present: "Şu anda sorumluluklarınızı yerine getiriyorsunuz.",
+        future: "Gelecekte denge ve adalet hayatınıza hakim olacak."
+    },
+    {
+        name: "The Hanged Man",
+        image: "images/the_hanged_man.png",
+        meaning: "Fedakarlık, duraklama, perspektif değişimi.",
+        past: "Geçmişte zor seçimler yaptınız.",
+        present: "Şu anda bekleme ve sabır zamanı.",
+        future: "Gelecekte yeni bir bakış açısı kazanacaksınız."
+    },
+    {
+        name: "Death",
+        image: "images/death.png",
+        meaning: "Sonlar, dönüşüm, yeniden doğuş.",
+        past: "Geçmişte önemli bir dönüm noktası yaşadınız.",
+        present: "Şu anda eskiyi bırakma zamanı.",
+        future: "Gelecekte yeni başlangıçlar olacak."
+    },
+    {
+        name: "Temperance",
+        image: "images/temperance.png",
+        meaning: "Denge, sabır, uyum ve ılımlılık.",
+        past: "Geçmişte dengeyi buldunuz.",
+        present: "Şu anda uyum ve sabır içindesiniz.",
+        future: "Gelecekte huzur ve denge sizi bekliyor."
+    },
+    {
+        name: "The Devil",
+        image: "images/the_devil.png",
+        meaning: "Bağımlılıklar, korkular, sınırlar.",
+        past: "Geçmişte zorlayıcı durumlar yaşadınız.",
+        present: "Şu anda bazı bağımlılıklarınızla yüzleşiyorsunuz.",
+        future: "Gelecekte özgürleşme fırsatı var."
+    },
+    {
+        name: "The Tower",
+        image: "images/the_tower.png",
+        meaning: "Ani değişim, yıkım, aydınlanma.",
+        past: "Geçmişte beklenmedik olaylar yaşadınız.",
+        present: "Şu anda yapısal değişimler içindesiniz.",
+        future: "Gelecekte yeni bir düzen kurulacak."
+    },
+    {
+        name: "The Star",
+        image: "images/the_star.png",
+        meaning: "Umut, ilham, iyileşme ve yenilenme.",
+        past: "Geçmişte umut ışığı buldunuz.",
+        present: "Şu anda iyileşme sürecindesiniz.",
+        future: "Gelecekte parlak fırsatlar sizi bekliyor."
+    },
+    {
+        name: "The Moon",
+        image: "images/the_moon.png",
+        meaning: "Gizem, bilinçaltı, yanılsamalar.",
+        past: "Geçmişte belirsizlikler yaşadınız.",
+        present: "Şu anda sezgilerinize güvenmelisiniz.",
+        future: "Gelecekte gerçekler ortaya çıkacak."
+    },
+    {
+        name: "The Sun",
+        image: "images/the_sun.png",
+        meaning: "Mutluluk, başarı, neşe ve canlılık.",
+        past: "Geçmişte mutluluk anları yaşadınız.",
+        present: "Şu anda pozitif enerji içindesiniz.",
+        future: "Gelecekte büyük başarılar sizi bekliyor."
+    },
+    {
+        name: "Judgement",
+        image: "images/judgement.png",
+        meaning: "Kendini değerlendirme, yeniden doğuş.",
+        past: "Geçmişte önemli kararlar aldınız.",
+        present: "Şu anda kendinizi sorguluyorsunuz.",
+        future: "Gelecekte yeni bir sayfa açılacak."
+    },
+    {
+        name: "The World",
+        image: "images/the_world.png",
+        meaning: "Tamamlanma, başarı, bütünlük.",
+        past: "Geçmişte önemli bir döngüyü tamamladınız.",
+        present: "Şu anda tamamlanma hissi var.",
+        future: "Gelecekte büyük başarılar ve tatmin sizi bekliyor."
+    }
+];
+
+function clearResults() {
+    document.getElementById("resultSingle").innerHTML = "";
+    document.getElementById("resultThree").innerHTML = "";
+}
+
+function createCardElement(card, position = null) {
+    const container = document.createElement("div");
+    container.className = "card-container";
+
+    if (position) {
+        const posElem = document.createElement("div");
+        posElem.className = "card-position";
+        posElem.textContent = position;
+        container.appendChild(posElem);
+    }
+
+    const img = document.createElement("img");
+    img.src = card.image;
+    img.alt = card.name;
+    container.appendChild(img);
+
+    const title = document.createElement("div");
+    title.className = "card-title";
+    title.textContent = card.name;
+    container.appendChild(title);
+
+    const meaning = document.createElement("div");
+    meaning.className = "card-meaning";
+    meaning.innerHTML = "<strong>Anlam:</strong> " + card.meaning;
+    container.appendChild(meaning);
+
+    const comment = document.createElement("div");
+    comment.className = "card-comment";
+
+    if (position) {
+        const key = position.toLowerCase();
+        comment.innerHTML = "<strong>Yorum:</strong> " + (card[key] || "Yorum bulunamadı.");
+    } else {
+        comment.innerHTML = "<strong>Yorum:</strong> " + card.meaning;
+    }
+    container.appendChild(comment);
+
+    setTimeout(() => container.classList.add("show"), 50);
+
+    return container;
+}
+
+function drawSingleCard() {
+    clearResults();
+    const index = Math.floor(Math.random() * cards.length);
+    const card = cards[index];
+    const container = createCardElement(card);
+    document.getElementById("resultSingle").appendChild(container);
+}
+
+function drawThreeCards() {
+    clearResults();
+    let indexes = [];
+    while (indexes.length < 3) {
+        const idx = Math.floor(Math.random() * cards.length);
+        if (!indexes.includes(idx)) indexes.push(idx);
+    }
+    const positions = ["Past", "Present", "Future"];
+    indexes.forEach((idx, i) => {
+        const card = cards[idx];
+        const cardElem = createCardElement(card, positions[i]);
+        document.getElementById("resultThree").appendChild(cardElem);
+    });
+}
+
+document.getElementById("drawSingleCardBtn").addEventListener("click", drawSingleCard);
+document.getElementById("drawThreeCardsBtn").addEventListener("click", drawThreeCards);
+</script>
+</body>
+</html>
